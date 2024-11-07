@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  user_name     String @id
+  user_password String
+  tasks         Task[] @relation("UserTasks")
+}
+
+model Task {
+  task_id          String  @id @default(cuid())
+  task_name        String
+  task_description String
+  task_status      String  @default("To do")
+  user             User?   @relation("UserTasks", fields: [user_id], references: [user_name])
+  user_id          String?
+}
