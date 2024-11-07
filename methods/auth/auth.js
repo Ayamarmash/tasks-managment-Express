@@ -1,9 +1,10 @@
 const jwt = require("jsonwebtoken")
 const {PrismaClient} = require("@prisma/client");
+const bcrypt = require("bcrypt");
 const prisma = new PrismaClient()
 
 const isAuthenticated = (req, res, next) => {
-    const token = req.header('Authorization')?.replace('Bearer ', '')
+    const token = req.header('Authorization')
     if (!token) {
         return res.status(401).send('Unauthorized')
     }
@@ -26,7 +27,9 @@ const authenticate = async (req, res, next) => {
                 user_name: user_name
             }
         })
-        if (!userData || userData.user_password !== user_password) {
+        const isPasswordMatch = await bcrypt.compare(user_password, userData.user_password);
+
+        if (!userData || !isPasswordMatch) {
             res.status(403).json({message: "Incorrect Username or Password"})
             return
         }

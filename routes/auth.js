@@ -2,6 +2,7 @@ const express = require("express")
 const router = express.Router()
 const {PrismaClient} = require("@prisma/client")
 const prisma = new PrismaClient()
+const bcrypt = require("bcrypt")
 const {authenticate} = require("../methods/auth/auth")
 router.post('/signup', async (req, res, next) => {
     const {user_name, user_password} = {
@@ -23,10 +24,11 @@ router.post('/signup', async (req, res, next) => {
             res.status(400).json("User Already Exist")
             return
         }
+        const hashPass = await bcrypt.hash(user_password, 10);
         await prisma.user.create({
             data: {
                 user_name: user_name,
-                user_password: user_password
+                user_password: hashPass
             }
         })
         res.status(201).json("User signed up successfully")
