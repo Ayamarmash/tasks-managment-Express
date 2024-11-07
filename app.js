@@ -19,5 +19,7 @@ app.use((req, res, next) => {
 
 
 app.use('/auth', authRouter)
+
+// protected routes
 app.use('/tasks', isAuthenticated, tasksRouter)
 module.exports = app

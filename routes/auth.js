@@ -14,16 +14,25 @@ router.post('/signup', async (req, res, next) => {
         return
     }
     try {
+        const user = await prisma.user.findUnique({
+            where: {
+                user_name: user_name
+            }
+        })
+        if (user) {
+            res.status(400).json("User Already Exist")
+            return
+        }
         await prisma.user.create({
             data: {
                 user_name: user_name,
                 user_password: user_password
             }
         })
+        res.status(201).json("User signed up successfully")
     } catch (err) {
         res.status(500).json("Something went wrong - Internal Server Error")
     }
-    res.status(201).json("User signed up successfully")
 })
 
 router.post('/login', authenticate)
