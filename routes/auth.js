@@ -3,7 +3,7 @@ const router = express.Router()
 const {PrismaClient} = require("@prisma/client")
 const prisma = new PrismaClient()
 const bcrypt = require("bcrypt")
-const {authenticate} = require("../methods/auth/auth")
+const {authenticate, loginRateLimiter} = require("../methods/auth/auth")
 router.post('/signup', async (req, res, next) => {
     const {user_name, user_password} = {
         user_name: req.body.username,
@@ -37,6 +37,6 @@ router.post('/signup', async (req, res, next) => {
     }
 })
 
-router.post('/login', authenticate)
+router.post('/login', loginRateLimiter, authenticate)
 
 module.exports = router

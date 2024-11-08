@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken")
 const {PrismaClient} = require("@prisma/client");
 const bcrypt = require("bcrypt");
 const prisma = new PrismaClient()
+const rateLimit = require("express-rate-limit");
 
 const isAuthenticated = (req, res, next) => {
     const token = req.header('Authorization')
@@ -16,7 +17,7 @@ const isAuthenticated = (req, res, next) => {
     }
 }
 
-const authenticate = async (req, res, next) => {
+const authenticate = async (req, res) => {
     const {user_name, user_password} = {
         user_name: req.body.username,
         user_password: req.body.password
@@ -27,6 +28,9 @@ const authenticate = async (req, res, next) => {
                 user_name: user_name
             }
         })
+        if (!userData) {
+            return res.status(403).json({message: "Incorrect Username or Password"})
+        }
         const isPasswordMatch = await bcrypt.compare(user_password, userData.user_password);
 
         if (!userData || !isPasswordMatch) {
@@ -34,11 +38,18 @@ const authenticate = async (req, res, next) => {
             return
         }
 
-        const jwtToken = jwt.sign({name: user_name}, process.env.ACCESS_TOKEN_SECRET)
+        const jwtToken = jwt.sign({name: user_name}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '30m'})
         res.status(200).json({token: jwtToken})
     } catch (err) {
-        res.status(404).json({message: "Incorrect Username or Password"})
+        res.status(500).json({message: "Internal Server Error"});
     }
 }
 
-module.exports = {isAuthenticated, authenticate}
+const loginRateLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 5,
+    message: {message: "Too many login attempts. Please try again after 10 minutes."},
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+module.exports = {isAuthenticated, authenticate, loginRateLimiter}
